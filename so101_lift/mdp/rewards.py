@@ -53,6 +53,13 @@ def gripper_closing_near_cube(
     cube: RigidObject = env.scene[cube_cfg.name]
     ee: FrameTransformer = env.scene[ee_cfg.name]
     robot = env.scene[robot_cfg.name]
+    # robot_cfg must come through the term's params (the manager only resolves
+    # SceneEntityCfg instances it finds there); guard against the unresolved default
+    if isinstance(robot_cfg.joint_ids, slice):
+        raise ValueError(
+            "gripper_closing_near_cube: pass robot_cfg via the reward term's params, "
+            'e.g. params={"robot_cfg": SceneEntityCfg("robot", joint_names=["gripper"])}'
+        )
     d = torch.norm(cube.data.root_pos_w - ee.data.target_pos_w[..., 0, :], dim=1)
     near = torch.exp(-d / std)
     grip = robot.data.joint_pos[:, robot_cfg.joint_ids[0]]
