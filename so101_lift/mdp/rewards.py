@@ -35,6 +35,31 @@ def ee_cube_distance(
     return torch.exp(-d / std)
 
 
+def gripper_closing_near_cube(
+    env: ManagerBasedRLEnv,
+    std: float,
+    open_pos: float = 0.8,
+    cube_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+    ee_cfg: SceneEntityCfg = SceneEntityCfg("ee_frame"),
+    robot_cfg: SceneEntityCfg = SceneEntityCfg("robot", joint_names=["gripper"]),
+) -> torch.Tensor:
+    """Bridge reward between reach and lift: close the jaws *while* at the cube.
+
+    Pure reach plateaus in a hover-at-the-cube local optimum, because the
+    binary gripper has to fire at exactly the right moment for the lift bonus
+    to ever pay out. This term hands out partial credit for that precursor:
+    proximity (exp kernel) multiplied by how closed the gripper is.
+    """
+    cube: RigidObject = env.scene[cube_cfg.name]
+    ee: FrameTransformer = env.scene[ee_cfg.name]
+    robot = env.scene[robot_cfg.name]
+    d = torch.norm(cube.data.root_pos_w - ee.data.target_pos_w[..., 0, :], dim=1)
+    near = torch.exp(-d / std)
+    grip = robot.data.joint_pos[:, robot_cfg.joint_ids[0]]
+    closed = torch.clamp(1.0 - grip / open_pos, 0.0, 1.0)  # 1 = fully closed
+    return near * closed
+
+
 def cube_lifted(
     env: ManagerBasedRLEnv,
     min_height: float,

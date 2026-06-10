@@ -111,6 +111,9 @@ class EventCfg:
 class RewardsCfg:
     # stage 1: get the gripper to the cube
     reach = RewTerm(func=mdp.ee_cube_distance, params={"std": 0.1}, weight=2.0)
+    # stage 1.5: bridge -- close the jaws while at the cube, so the policy
+    # discovers grasping instead of hovering forever in the reach optimum
+    grasp = RewTerm(func=mdp.gripper_closing_near_cube, params={"std": 0.05}, weight=1.0)
     # stage 2: get the cube off the ground (cube center starts at ~0.013 m)
     lift = RewTerm(func=mdp.cube_lifted, params={"min_height": 0.05}, weight=10.0)
     # stage 3: carry the lifted cube to the commanded goal
