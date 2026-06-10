@@ -15,6 +15,7 @@ class SO101LiftPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     save_interval = 100
     experiment_name = "blacknode_so101_lift"
     empirical_normalization = False
+    clip_actions = 1.0  # bound raw policy outputs before the action scale
     policy = RslRlPpoActorCriticCfg(
         init_noise_std=0.8,
         actor_hidden_dims=[256, 128],

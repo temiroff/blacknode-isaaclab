@@ -31,7 +31,12 @@ SO101_CFG = ArticulationCfg(
             max_depenetration_velocity=5.0,
         ),
         articulation_props=sim_utils.ArticulationRootPropertiesCfg(
-            enabled_self_collisions=True,
+            # MUST stay False: the baked collision hulls of adjacent links
+            # interpenetrate at the joints by design (servo bodies sit inside
+            # the neighboring holders), and this USD carries no filtered
+            # collision pairs -- enabling self-collision makes every arm
+            # explode at spawn (NaN cascade into the policy).
+            enabled_self_collisions=False,
             solver_position_iteration_count=8,
             solver_velocity_iteration_count=0,
         ),
