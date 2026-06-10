@@ -3,6 +3,7 @@ name = "blacknode-isaaclab"
 version = "0.1.0"
 description = "Reinforcement learning tasks in NVIDIA Isaac Lab — SO-ARM101 cube lift"
 readme = "README.md"
+license = "Apache-2.0"
 requires-python = "==3.11.*"
 dependencies = [
     "isaaclab[all,isaacsim]==2.3.0",

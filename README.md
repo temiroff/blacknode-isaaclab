@@ -289,5 +289,5 @@ Start with `--num_envs 64` windowed to confirm everything builds, then scale up 
   USD conversion of their robot description and remains subject to their license/attribution.
 - Thanks to the broader SO-ARM + LeRobot community for making this hardware approachable.
 
-Add a `LICENSE` file of your choice for the code (MIT or BSD-3-Clause are good fits) and keep the
-robot-model attribution above.
+The code in this repository is licensed under the [Apache License 2.0](LICENSE). The robot-model
+attribution above applies to the USD asset.
