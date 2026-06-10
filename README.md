@@ -259,9 +259,9 @@ Start with `--num_envs 64` windowed to confirm everything builds, then scale up 
 `assets/so101_robot.usd` was produced from a hand-cleaned authoring scene:
 1. Imported the SO-ARM101 from URDF and **flattened** the shared-mesh references so all geometry is
    baked into one file (no external refs, nothing breaks when the file moves).
-2. Set collision approximation to **`convexDecomposition`** on all 17 collision meshes — accurate
-   contact at a cost that scales to thousands of parallel envs (SDF colliders, which we use in the
-   single-robot authoring scene for high-fidelity grasping, are too heavy at RL scale).
+2. Collision approximations: **`convexDecomposition`** on the 15 structural parts (cheap, scales to
+   thousands of envs) and **`SDF`** on the two gripper jaws — the concave grasping surfaces need the
+   fidelity (convex-hull jaws failed to ever capture the cube in training; SDF jaws grasp reliably).
 3. Stripped authoring-only props (ground, cube), keeping just the articulation.
 4. Set `so101_new_calib` as the default prim.
 
