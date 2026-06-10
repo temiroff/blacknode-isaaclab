@@ -1,0 +1,28 @@
+[project]
+name = "blacknode-isaaclab"
+version = "0.1.0"
+description = "Reinforcement learning tasks in NVIDIA Isaac Lab — SO-ARM101 cube lift"
+readme = "README.md"
+requires-python = "==3.11.*"
+dependencies = [
+    "isaaclab[all,isaacsim]==2.3.0",
+    "torch==2.7.0",
+    "torchvision==0.22.0",
+]
+
+[tool.uv]
+# not an installable package -- train.py/play.py run as plain scripts
+package = false
+index-strategy = "unsafe-best-match"
+
+# flatdict (pulled in by isaaclab) has a legacy setup.py that imports
+# pkg_resources without declaring it; give its build env an older setuptools.
+[tool.uv.extra-build-dependencies]
+flatdict = ["setuptools<81"]
+
+# Isaac Sim wheels live on NVIDIA's index; CUDA torch builds on PyTorch's.
+[[tool.uv.index]]
+url = "https://pypi.nvidia.com/"
+
+[[tool.uv.index]]
+url = "https://download.pytorch.org/whl/cu128"
