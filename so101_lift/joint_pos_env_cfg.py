@@ -9,7 +9,7 @@ offset needed.
 
 import isaaclab.sim as sim_utils
 from isaaclab.assets import RigidObjectCfg
-from isaaclab.sensors.frame_transformer.frame_transformer_cfg import FrameTransformerCfg
+from isaaclab.sensors.frame_transformer.frame_transformer_cfg import FrameTransformerCfg, OffsetCfg
 from isaaclab.utils import configclass
 
 from . import mdp
@@ -66,6 +66,10 @@ class SO101LiftCubeEnvCfg(CubeLiftEnvCfg):
                 FrameTransformerCfg.FrameCfg(
                     prim_path="{ENV_REGEX_NS}/Robot/gripper_frame_link",
                     name="end_effector",
+                    # gripper_frame_link sits at the JAW TIPS; pull the grasp
+                    # point back along local -Z (into the jaws) so the reward
+                    # optimum puts the cube between the fingers, not at the tip
+                    offset=OffsetCfg(pos=[0.0, 0.0, -0.02]),
                 ),
             ],
         )
