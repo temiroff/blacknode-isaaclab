@@ -23,7 +23,6 @@ from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.markers import VisualizationMarkersCfg
 from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.sensors.frame_transformer.frame_transformer_cfg import FrameTransformerCfg
-from isaaclab.sim.spawners.from_files.from_files_cfg import GroundPlaneCfg
 from isaaclab.utils import configclass
 
 from . import mdp
@@ -37,10 +36,20 @@ class CubeLiftSceneCfg(InteractiveSceneCfg):
     ee_frame: FrameTransformerCfg = MISSING
     object: RigidObjectCfg = MISSING
 
+    # black glossy floor: a large static collision slab with a dark, low-
+    # roughness, metallic surface (reflective under RTX). Top face at z=0.
     ground = AssetBaseCfg(
         prim_path="/World/GroundPlane",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.0, 0.0, 0.0]),
-        spawn=GroundPlaneCfg(),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.0, 0.0, -0.1]),
+        spawn=sim_utils.CuboidCfg(
+            size=(100.0, 100.0, 0.2),
+            collision_props=sim_utils.CollisionPropertiesCfg(),
+            visual_material=sim_utils.PreviewSurfaceCfg(
+                diffuse_color=(0.02, 0.02, 0.02),
+                roughness=0.12,
+                metallic=0.7,
+            ),
+        ),
     )
 
     light = AssetBaseCfg(
