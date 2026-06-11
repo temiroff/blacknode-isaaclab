@@ -34,6 +34,7 @@ class CubeLiftSceneCfg(InteractiveSceneCfg):
 
     robot: ArticulationCfg = MISSING
     ee_frame: FrameTransformerCfg = MISSING
+    ee_vis: FrameTransformerCfg = MISSING  # visualization-only: arrows at the pinch point
     object: RigidObjectCfg = MISSING
 
     # black glossy floor: a large static collision slab with a dark, low-

@@ -90,6 +90,27 @@ class SO101LiftCubeEnvCfg(CubeLiftEnvCfg):
             ],
         )
 
+        # visualization-only sensor: draws ONLY the frame arrows at the pinch
+        # point. Source and target are the same prim with the same offset, so
+        # the two drawn frames overlap into one set of arrows and the
+        # connector line is zero-length (invisible).
+        pinch_marker = FRAME_MARKER_CFG.copy()
+        pinch_marker.markers["frame"].scale = (0.03, 0.03, 0.03)
+        pinch_marker.prim_path = "/Visuals/PinchFrame"
+        self.scene.ee_vis = FrameTransformerCfg(
+            prim_path="{ENV_REGEX_NS}/Robot/gripper_frame_link",
+            source_frame_offset=OffsetCfg(pos=[0.0, 0.0, -0.02]),
+            debug_vis=True,
+            visualizer_cfg=pinch_marker,
+            target_frames=[
+                FrameTransformerCfg.FrameCfg(
+                    prim_path="{ENV_REGEX_NS}/Robot/gripper_frame_link",
+                    name="pinch_point",
+                    offset=OffsetCfg(pos=[0.0, 0.0, -0.02]),
+                ),
+            ],
+        )
+
 
 @configclass
 class SO101LiftCubeEnvCfg_PLAY(SO101LiftCubeEnvCfg):
