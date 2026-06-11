@@ -74,9 +74,11 @@ def ee_pointing_at_cube(
 ) -> torch.Tensor:
     """Reward orienting the gripper mouth toward the cube.
 
-    The TCP's local +X axis (the RED arrow of the rendered frame marker)
-    points out of the jaws -- verified visually against the physics body
-    frame, which is the same quaternion this reward reads.
+    The TCP's local +Z axis points out of the jaws -- triple-confirmed by the
+    URDF (gripper_frame_joint rpy (0, pi, 0) off gripper_link's -Z jaw
+    direction), the USD transform, and the upstream project's proven ee
+    offset. (The pinch LINE is offset ~1.8cm along local -X -- that lateral
+    shift lives in the ee-frame OffsetCfg, not in this axis.)
     Reward = cosine between that axis (in world) and the ee->cube direction:
     1 when the gripper faces the cube dead-on, 0 when sideways or away. This
     is what teaches the wrist joints to rotate into a graspable orientation.
@@ -86,7 +88,7 @@ def ee_pointing_at_cube(
     idx = _ee_index(ee)
     ee_pos = ee.data.target_pos_w[..., idx, :]
     ee_quat = ee.data.target_quat_w[..., idx, :]
-    approach_axis = torch.tensor([1.0, 0.0, 0.0], device=ee_pos.device).expand(ee_pos.shape[0], 3)
+    approach_axis = torch.tensor([0.0, 0.0, 1.0], device=ee_pos.device).expand(ee_pos.shape[0], 3)
     axis_w = quat_apply(ee_quat, approach_axis)
     to_cube = cube.data.root_pos_w - ee_pos
     to_cube = to_cube / torch.norm(to_cube, dim=1, keepdim=True).clamp(min=1e-6)
