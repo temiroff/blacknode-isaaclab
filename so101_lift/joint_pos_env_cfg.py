@@ -62,17 +62,14 @@ class SO101LiftCubeEnvCfg(CubeLiftEnvCfg):
             ),
         )
 
-        # end-effector frame: base_link -> gripper_frame_link (the SO-101 TCP).
-        # debug_vis draws the OFFSET pinch point (between the fingers) and the
-        # cube-center frame, so you can see exactly what `reach` is pulling
-        # together: those two frames coinciding = reward optimum.
+        # end-effector frame: the grasp point all distance rewards use.
+        # debug vis kept ON but with the frame markers shrunk to invisible --
+        # what remains is just the yellow connector line gripper -> cube,
+        # a clean "this is my goal" indicator per robot.
         ee_marker = FRAME_MARKER_CFG.copy()
-        ee_marker.markers["frame"].scale = (0.03, 0.03, 0.03)
+        ee_marker.markers["frame"].scale = (0.0001, 0.0001, 0.0001)  # hide arrows, keep lines
         ee_marker.prim_path = "/Visuals/EEFrame"
         self.scene.ee_frame = FrameTransformerCfg(
-            # source at the gripper (not base_link): the debug connector lines
-            # run source->target, so rooting here keeps them short and local
-            # instead of long yellow beams from the robot base
             prim_path="{ENV_REGEX_NS}/Robot/gripper_link",
             debug_vis=True,
             visualizer_cfg=ee_marker,
@@ -81,11 +78,11 @@ class SO101LiftCubeEnvCfg(CubeLiftEnvCfg):
                     prim_path="{ENV_REGEX_NS}/Robot/gripper_frame_link",
                     name="end_effector",
                     # gripper_frame_link sits at the JAW TIPS; pull the grasp
-                    # point back along local -Z (into the jaws) so the reward
-                    # optimum puts the cube between the fingers, not at the tip
+                    # point back along local -Z so the reward optimum puts the
+                    # cube against the fixed jaw, between the fingers
                     offset=OffsetCfg(pos=[0.0, 0.0, -0.02]),
                 ),
-                # visualization-only frame at the cube center (the grasp goal)
+                # tracked only so the debug line connects gripper -> cube
                 FrameTransformerCfg.FrameCfg(
                     prim_path="{ENV_REGEX_NS}/Cube",
                     name="cube_center",
