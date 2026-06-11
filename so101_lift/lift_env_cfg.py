@@ -79,12 +79,13 @@ class CommandsCfg:
     object_pose = mdp.UniformPoseCommandCfg(
         asset_name="robot",
         body_name=MISSING,  # set by the concrete cfg
-        resampling_time_range=(6.0, 6.0),  # one goal per episode
+        resampling_time_range=(5.0, 5.0),  # one goal per episode
         debug_vis=True,
+        # upstream's proven goal region (side-carry, well above the floor)
         ranges=mdp.UniformPoseCommandCfg.Ranges(
-            pos_x=(0.15, 0.30),
-            pos_y=(-0.15, 0.15),
-            pos_z=(0.12, 0.28),
+            pos_x=(-0.1, 0.1),
+            pos_y=(-0.3, -0.1),
+            pos_z=(0.2, 0.35),
             roll=(0.0, 0.0),
             pitch=(0.0, 0.0),
             yaw=(0.0, 0.0),
@@ -120,11 +121,12 @@ class EventCfg:
     reset_scene = EventTerm(func=mdp.reset_scene_to_default, mode="reset")
 
     # new cube spot every episode -- the policy must generalize, not memorize
+    # (upstream's randomization ranges)
     randomize_cube = EventTerm(
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (-0.06, 0.08), "y": (-0.12, 0.12), "z": (0.0, 0.0)},
+            "pose_range": {"x": (-0.1, 0.1), "y": (-0.2, 0.2), "z": (0.0, 0.0)},
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("object"),
         },
@@ -190,10 +192,16 @@ class CubeLiftEnvCfg(ManagerBasedRLEnvCfg):
 
     def __post_init__(self):
         self.decimation = 2          # policy at 50 Hz
-        self.episode_length_s = 6.0
+        self.episode_length_s = 5.0
         self.viewer.eye = (1.5, 1.5, 1.0)
         self.sim.dt = 0.01           # physics at 100 Hz
         self.sim.render_interval = self.decimation
+
+        # upstream's PhysX contact settings (matter for grasp contacts)
+        self.sim.physx.bounce_threshold_velocity = 0.01
+        self.sim.physx.friction_correlation_distance = 0.00625
+        self.sim.physx.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 4
+        self.sim.physx.gpu_total_aggregate_pairs_capacity = 16 * 1024
 
         # NOTE: if the asset's jaw colliders are ever switched back to SDF,
         # also restore: self.sim.physx.gpu_collision_stack_size = 2**31

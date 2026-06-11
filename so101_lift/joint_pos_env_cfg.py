@@ -12,13 +12,11 @@ from isaaclab.assets import RigidObjectCfg
 from isaaclab.markers.config import FRAME_MARKER_CFG
 from isaaclab.sensors.frame_transformer.frame_transformer_cfg import FrameTransformerCfg, OffsetCfg
 from isaaclab.utils import configclass
+from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
 
 from . import mdp
 from .lift_env_cfg import CubeLiftEnvCfg
 from .robot_cfg import SO101_CFG
-
-CUBE_SIZE = 0.025  # m
-CUBE_MASS = 0.03   # kg -- light enough for the STS3215 servos to lift
 
 
 @configclass
@@ -48,16 +46,26 @@ class SO101LiftCubeEnvCfg(CubeLiftEnvCfg):
         # goal command is expressed relative to this body
         self.commands.object_pose.body_name = ["gripper_frame_link"]
 
-        # cube: spawned primitive, resting on the ground in front of the base
+        # cube: the upstream task's DexCube, verbatim. Our earlier 2.5cm/30g
+        # primitive was so light that random arm-smacks launched it past the
+        # lift threshold -- "flail lifts" paid out and PPO inflated action
+        # noise to farm them (std exploded 1.0 -> 5.9). The heavier DexCube
+        # only rises when genuinely grasped, which is what makes the minimal
+        # reward recipe stable upstream.
         self.scene.object = RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/Cube",
-            init_state=RigidObjectCfg.InitialStateCfg(pos=[0.22, 0.0, CUBE_SIZE / 2], rot=[1, 0, 0, 0]),
-            spawn=sim_utils.CuboidCfg(
-                size=(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE),
-                rigid_props=sim_utils.RigidBodyPropertiesCfg(max_depenetration_velocity=5.0),
-                mass_props=sim_utils.MassPropertiesCfg(mass=CUBE_MASS),
-                collision_props=sim_utils.CollisionPropertiesCfg(),
-                visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.85, 0.2, 0.15)),
+            init_state=RigidObjectCfg.InitialStateCfg(pos=[0.2, 0.0, 0.015], rot=[1, 0, 0, 0]),
+            spawn=sim_utils.UsdFileCfg(
+                usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Blocks/DexCube/dex_cube_instanceable.usd",
+                scale=(0.5, 0.5, 0.5),
+                rigid_props=sim_utils.RigidBodyPropertiesCfg(
+                    solver_position_iteration_count=16,
+                    solver_velocity_iteration_count=1,
+                    max_angular_velocity=1000.0,
+                    max_linear_velocity=1000.0,
+                    max_depenetration_velocity=5.0,
+                    disable_gravity=False,
+                ),
             ),
         )
 
