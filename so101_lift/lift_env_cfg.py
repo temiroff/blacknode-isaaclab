@@ -44,10 +44,13 @@ class CubeLiftSceneCfg(InteractiveSceneCfg):
         spawn=sim_utils.CuboidCfg(
             size=(100.0, 100.0, 0.2),
             collision_props=sim_utils.CollisionPropertiesCfg(),
+            # satin black: mirror settings (roughness ~0.1, metallic ~0.7)
+            # produce a huge white specular pool + denoiser grain that reads
+            # as a "second floor" -- keep the sheen subtle instead
             visual_material=sim_utils.PreviewSurfaceCfg(
-                diffuse_color=(0.02, 0.02, 0.02),
-                roughness=0.12,
-                metallic=0.7,
+                diffuse_color=(0.03, 0.03, 0.03),
+                roughness=0.35,
+                metallic=0.25,
             ),
         ),
     )
