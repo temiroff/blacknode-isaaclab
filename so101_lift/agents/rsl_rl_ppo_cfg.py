@@ -26,7 +26,7 @@ class SO101LiftPPORunnerCfg(RslRlOnPolicyRunnerCfg):
         value_loss_coef=1.0,
         use_clipped_value_loss=True,
         clip_param=0.2,
-        entropy_coef=0.004,
+        entropy_coef=0.008,  # keep exploring long enough to amplify rare lifts
         num_learning_epochs=4,
         num_mini_batches=8,
         learning_rate=3.0e-4,

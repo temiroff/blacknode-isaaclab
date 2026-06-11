@@ -138,23 +138,26 @@ class RewardsCfg:
     # stage 1a: face the cube -- teaches the wrist to rotate the jaws into a
     # graspable orientation instead of arriving sideways
     point_at_cube = RewTerm(func=mdp.ee_pointing_at_cube, weight=1.0)
-    # stage 1b: jaws OPEN while approaching (4-15 cm out)
+    # stage 1b: jaws OPEN while approaching (5-15 cm out). Weight kept LOW:
+    # at the handoff distance, closing must pay more than staying open, or
+    # the policy hovers open-jawed forever (observed: lift never amplified)
     approach_open = RewTerm(
         func=mdp.gripper_open_on_approach,
         params={
             "open_pos": 0.8,
-            "near_dist": 0.04,
+            "near_dist": 0.05,
             "far_dist": 0.15,
             "robot_cfg": SceneEntityCfg("robot", joint_names=["gripper"]),
         },
-        weight=0.5,
+        weight=0.25,
     )
-    # stage 1.5: bridge -- close the jaws once AT the cube, so the policy
-    # discovers grasping instead of hovering forever in the reach optimum
+    # stage 1.5: bridge -- close the jaws once AT the cube. Sharp kernel and
+    # heavy weight so that at contact distance, closing strictly dominates
+    # every hover reward combined
     grasp = RewTerm(
         func=mdp.gripper_closing_near_cube,
-        params={"std": 0.05, "robot_cfg": SceneEntityCfg("robot", joint_names=["gripper"])},
-        weight=1.0,
+        params={"std": 0.03, "robot_cfg": SceneEntityCfg("robot", joint_names=["gripper"])},
+        weight=4.0,
     )
     # stage 2: get the cube off the ground (cube center starts at ~0.013 m)
     lift = RewTerm(func=mdp.cube_lifted, params={"min_height": 0.05}, weight=10.0)
