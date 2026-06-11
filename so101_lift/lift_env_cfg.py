@@ -208,11 +208,11 @@ class CubeLiftEnvCfg(ManagerBasedRLEnvCfg):
         self.sim.dt = 0.01           # physics at 100 Hz
         self.sim.render_interval = self.decimation
 
-        # SDF jaw colliders x 4096 envs overflow the default GPU collision
-        # stack (PhysX reported needing ~1.4 GB and DROPPED contacts, which
-        # silently breaks grasping). Give it headroom; if this OOMs your GPU,
-        # train with --num_envs 2048 instead.
-        self.sim.physx.gpu_collision_stack_size = 2**31  # 2 GB
+        # NOTE: if the asset's jaw colliders are ever switched back to SDF,
+        # also restore: self.sim.physx.gpu_collision_stack_size = 2**31
+        # (SDF x 4096 envs overflows the default stack and DROPS contacts).
+        # With all-convexDecomposition colliders the default stack suffices
+        # and the sim runs ~4-6x faster (~100k steps/s vs ~20k).
         # goal marker: small green sphere (orientation is irrelevant for this task)
         self.commands.object_pose.goal_pose_visualizer_cfg = VisualizationMarkersCfg(
             prim_path="/Visuals/Command/goal_pose",
