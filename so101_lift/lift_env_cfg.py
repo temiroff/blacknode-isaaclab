@@ -181,5 +181,6 @@ class CubeLiftEnvCfg(ManagerBasedRLEnvCfg):
                 ),
             },
         )
-        # gripper's current-pose frame marker, shrunk to the arm's scale
-        self.commands.object_pose.current_pose_visualizer_cfg.markers["frame"].scale = (0.03, 0.03, 0.03)
+        # the command's current-pose marker sits at the raw TCP (jaw tip) and
+        # duplicates the ee_frame vis -- shrink it to nearly invisible
+        self.commands.object_pose.current_pose_visualizer_cfg.markers["frame"].scale = (0.01, 0.01, 0.01)

@@ -9,6 +9,7 @@ offset needed.
 
 import isaaclab.sim as sim_utils
 from isaaclab.assets import RigidObjectCfg
+from isaaclab.markers.config import FRAME_MARKER_CFG
 from isaaclab.sensors.frame_transformer.frame_transformer_cfg import FrameTransformerCfg, OffsetCfg
 from isaaclab.utils import configclass
 
@@ -61,10 +62,17 @@ class SO101LiftCubeEnvCfg(CubeLiftEnvCfg):
             ),
         )
 
-        # end-effector frame: base_link -> gripper_frame_link (the SO-101 TCP)
+        # end-effector frame: base_link -> gripper_frame_link (the SO-101 TCP).
+        # debug_vis draws the OFFSET pinch point (between the fingers) and the
+        # cube-center frame, so you can see exactly what `reach` is pulling
+        # together: those two frames coinciding = reward optimum.
+        ee_marker = FRAME_MARKER_CFG.copy()
+        ee_marker.markers["frame"].scale = (0.03, 0.03, 0.03)
+        ee_marker.prim_path = "/Visuals/EEFrame"
         self.scene.ee_frame = FrameTransformerCfg(
             prim_path="{ENV_REGEX_NS}/Robot/base_link",
-            debug_vis=False,
+            debug_vis=True,
+            visualizer_cfg=ee_marker,
             target_frames=[
                 FrameTransformerCfg.FrameCfg(
                     prim_path="{ENV_REGEX_NS}/Robot/gripper_frame_link",
@@ -73,6 +81,11 @@ class SO101LiftCubeEnvCfg(CubeLiftEnvCfg):
                     # point back along local -Z (into the jaws) so the reward
                     # optimum puts the cube between the fingers, not at the tip
                     offset=OffsetCfg(pos=[0.0, 0.0, -0.02]),
+                ),
+                # visualization-only frame at the cube center (the grasp goal)
+                FrameTransformerCfg.FrameCfg(
+                    prim_path="{ENV_REGEX_NS}/Cube",
+                    name="cube_center",
                 ),
             ],
         )

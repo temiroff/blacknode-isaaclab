@@ -22,6 +22,11 @@ if TYPE_CHECKING:
     from isaaclab.envs import ManagerBasedRLEnv
 
 
+def _ee_index(ee: FrameTransformer) -> int:
+    """Index of the grasp-point frame -- never assume it is frame 0."""
+    return ee.data.target_frame_names.index("end_effector")
+
+
 def ee_cube_distance(
     env: ManagerBasedRLEnv,
     std: float,
@@ -31,7 +36,7 @@ def ee_cube_distance(
     """exp(-d/std) on the gripper->cube distance: 1 at contact, ->0 far away."""
     cube: RigidObject = env.scene[cube_cfg.name]
     ee: FrameTransformer = env.scene[ee_cfg.name]
-    d = torch.norm(cube.data.root_pos_w - ee.data.target_pos_w[..., 0, :], dim=1)
+    d = torch.norm(cube.data.root_pos_w - ee.data.target_pos_w[..., _ee_index(ee), :], dim=1)
     return torch.exp(-d / std)
 
 
@@ -55,7 +60,7 @@ def gripper_open_on_approach(
     robot = env.scene[robot_cfg.name]
     if isinstance(robot_cfg.joint_ids, slice):
         raise ValueError("gripper_open_on_approach: pass robot_cfg via the term's params")
-    d = torch.norm(cube.data.root_pos_w - ee.data.target_pos_w[..., 0, :], dim=1)
+    d = torch.norm(cube.data.root_pos_w - ee.data.target_pos_w[..., _ee_index(ee), :], dim=1)
     in_band = (d > near_dist) & (d < far_dist)
     grip = robot.data.joint_pos[:, robot_cfg.joint_ids[0]]
     openness = torch.clamp(grip / open_pos, 0.0, 1.0)  # 1 = fully open
@@ -76,8 +81,9 @@ def ee_pointing_at_cube(
     """
     cube: RigidObject = env.scene[cube_cfg.name]
     ee: FrameTransformer = env.scene[ee_cfg.name]
-    ee_pos = ee.data.target_pos_w[..., 0, :]
-    ee_quat = ee.data.target_quat_w[..., 0, :]
+    idx = _ee_index(ee)
+    ee_pos = ee.data.target_pos_w[..., idx, :]
+    ee_quat = ee.data.target_quat_w[..., idx, :]
     approach_axis = torch.tensor([0.0, 0.0, 1.0], device=ee_pos.device).expand(ee_pos.shape[0], 3)
     axis_w = quat_apply(ee_quat, approach_axis)
     to_cube = cube.data.root_pos_w - ee_pos
@@ -110,7 +116,7 @@ def gripper_closing_near_cube(
             "gripper_closing_near_cube: pass robot_cfg via the reward term's params, "
             'e.g. params={"robot_cfg": SceneEntityCfg("robot", joint_names=["gripper"])}'
         )
-    d = torch.norm(cube.data.root_pos_w - ee.data.target_pos_w[..., 0, :], dim=1)
+    d = torch.norm(cube.data.root_pos_w - ee.data.target_pos_w[..., _ee_index(ee), :], dim=1)
     near = torch.exp(-d / std)
     grip = robot.data.joint_pos[:, robot_cfg.joint_ids[0]]
     closed = torch.clamp(1.0 - grip / open_pos, 0.0, 1.0)  # 1 = fully closed
