@@ -194,6 +194,12 @@ class CubeLiftEnvCfg(ManagerBasedRLEnvCfg):
         self.viewer.eye = (1.5, 1.5, 1.0)
         self.sim.dt = 0.01           # physics at 100 Hz
         self.sim.render_interval = self.decimation
+
+        # SDF jaw colliders x 4096 envs overflow the default GPU collision
+        # stack (PhysX reported needing ~1.4 GB and DROPPED contacts, which
+        # silently breaks grasping). Give it headroom; if this OOMs your GPU,
+        # train with --num_envs 2048 instead.
+        self.sim.physx.gpu_collision_stack_size = 2**31  # 2 GB
         # goal marker: small green sphere (orientation is irrelevant for this task)
         self.commands.object_pose.goal_pose_visualizer_cfg = VisualizationMarkersCfg(
             prim_path="/Visuals/Command/goal_pose",
