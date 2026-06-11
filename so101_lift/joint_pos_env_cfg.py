@@ -64,13 +64,16 @@ class SO101LiftCubeEnvCfg(CubeLiftEnvCfg):
 
         # end-effector frame: the grasp point all distance rewards use.
         # debug vis kept ON but with the frame markers shrunk to invisible --
-        # what remains is just the yellow connector line gripper -> cube,
-        # a clean "this is my goal" indicator per robot.
+        # what remains is just the yellow connector line pinch -> cube,
+        # a clean "this is my goal" indicator per robot. The SOURCE sits at
+        # the pinch point itself (lines start at the source), so the line
+        # begins at the jaws, not the wrist.
         ee_marker = FRAME_MARKER_CFG.copy()
         ee_marker.markers["frame"].scale = (0.0001, 0.0001, 0.0001)  # hide arrows, keep lines
         ee_marker.prim_path = "/Visuals/EEFrame"
         self.scene.ee_frame = FrameTransformerCfg(
-            prim_path="{ENV_REGEX_NS}/Robot/gripper_link",
+            prim_path="{ENV_REGEX_NS}/Robot/gripper_frame_link",
+            source_frame_offset=OffsetCfg(pos=[0.0, 0.0, -0.02]),
             debug_vis=True,
             visualizer_cfg=ee_marker,
             target_frames=[
