@@ -29,10 +29,13 @@ class SO101LiftCubeEnvCfg(CubeLiftEnvCfg):
         self.scene.robot = SO101_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
 
         # actions: 5 arm joints as position targets, gripper as open/close
+        # scale 1.0 with clip_actions=1.0 gives +-1 rad (+-57 deg) of authority
+        # around the default "ready" pose -- wide enough to cover the grasp
+        # envelope (scale 0.5 capped joints at +-28 deg and could not reach it)
         self.actions.arm_action = mdp.JointPositionActionCfg(
             asset_name="robot",
             joint_names=["shoulder_.*", "elbow_flex", "wrist_.*"],
-            scale=0.5,
+            scale=1.0,
             use_default_offset=True,
         )
         self.actions.gripper_action = mdp.BinaryJointPositionActionCfg(

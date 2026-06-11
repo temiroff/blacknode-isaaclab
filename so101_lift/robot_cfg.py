@@ -41,11 +41,22 @@ SO101_CFG = ArticulationCfg(
             solver_velocity_iteration_count=0,
         ),
     ),
-    # the same neutral pose we verified stable on the ground plane in the GUI
+    # "ready" pose centered on the grasp workspace. Joint-position actions are
+    # offsets around these defaults (clipped to +-1 * scale), so the defaults
+    # must sit near the middle of the envelope the task needs. The manual
+    # grasp pose (lift -0.58, elbow 1.08, roll -1.53 rad) is inside
+    # default +- 1.0 rad for every joint.
     init_state=ArticulationCfg.InitialStateCfg(
         pos=(0.0, 0.0, 0.0),
         rot=(1.0, 0.0, 0.0, 0.0),
-        joint_pos={".*": 0.0},
+        joint_pos={
+            "shoulder_pan": 0.0,
+            "shoulder_lift": -0.3,
+            "elbow_flex": 0.6,
+            "wrist_flex": 0.0,
+            "wrist_roll": -0.8,
+            "gripper": 0.0,
+        },
         joint_vel={".*": 0.0},
     ),
     actuators={
