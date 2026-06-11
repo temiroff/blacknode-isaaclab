@@ -284,6 +284,10 @@ Start with `--num_envs 64` windowed to confirm everything builds, then scale up 
 
 - **Task code** (everything under `blacknode/`): written from scratch for this project, using
   [NVIDIA Isaac Lab](https://github.com/isaac-sim/IsaacLab) (BSD-3-Clause) as a framework dependency.
+- **Actuator PD constants** in `robot_cfg.py` are adopted from the
+  [isaac_so_arm101](https://github.com/MuammerBay/isaac_so_arm101) project (BSD-3-Clause) by
+  Muammer Bay (LycheeAI) & Louis Le Lay — empirically tuned for the STS3215 servos and validated
+  by their trained policies.
 - **Robot model:** the SO-ARM101 design, URDF and meshes are by
   [The Robot Studio](https://github.com/TheRobotStudio/SO-ARM100) — `assets/so101_robot.usd` is a
   USD conversion of their robot description and remains subject to their license/attribution.

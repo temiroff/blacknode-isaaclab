@@ -133,8 +133,8 @@ class EventCfg:
 
 @configclass
 class RewardsCfg:
-    # stage 1: get the gripper to the cube
-    reach = RewTerm(func=mdp.ee_cube_distance, params={"std": 0.1}, weight=2.0)
+    # stage 1: get the gripper to the cube (sharp kernel, proven upstream)
+    reach = RewTerm(func=mdp.ee_cube_distance, params={"std": 0.05}, weight=2.0)
     # stage 1a: face the cube -- teaches the wrist to rotate the jaws into a
     # graspable orientation instead of arriving sideways
     point_at_cube = RewTerm(func=mdp.ee_pointing_at_cube, weight=1.0)
@@ -144,7 +144,7 @@ class RewardsCfg:
     approach_open = RewTerm(
         func=mdp.gripper_open_on_approach,
         params={
-            "open_pos": 0.8,
+            "open_pos": 0.5,
             "near_dist": 0.05,
             "far_dist": 0.15,
             "robot_cfg": SceneEntityCfg("robot", joint_names=["gripper"]),
@@ -166,12 +166,15 @@ class RewardsCfg:
         },
         weight=4.0,
     )
-    # stage 2: get the cube off the ground (cube center starts at ~0.013 m)
-    lift = RewTerm(func=mdp.cube_lifted, params={"min_height": 0.05}, weight=10.0)
+    # stage 2: get the cube off the ground. LOW bar (cube center rests at
+    # ~0.013 m; 0.03 = a ~1.7 cm raise): the proven upstream task pays lift
+    # for barely a 1 cm hop, which gives exploration constant taste of the
+    # bonus -- a 5 cm cliff was never discovered in our earlier runs
+    lift = RewTerm(func=mdp.cube_lifted, params={"min_height": 0.03}, weight=10.0)
     # stage 3: carry the lifted cube to the commanded goal
     place = RewTerm(
         func=mdp.cube_to_goal,
-        params={"std": 0.15, "min_height": 0.05, "command_name": "object_pose"},
+        params={"std": 0.15, "min_height": 0.03, "command_name": "object_pose"},
         weight=15.0,
     )
     # smoothness

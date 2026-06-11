@@ -41,38 +41,52 @@ SO101_CFG = ArticulationCfg(
             solver_velocity_iteration_count=0,
         ),
     ),
-    # "ready" pose centered on the grasp workspace. Joint-position actions are
-    # offsets around these defaults (clipped to +-1 * scale), so the defaults
-    # must sit near the middle of the envelope the task needs. The manual
-    # grasp pose (lift -0.58, elbow 1.08, roll -1.53 rad) is inside
-    # default +- 1.0 rad for every joint.
+    # wrist pre-bent ~90deg so the gripper starts facing down toward the
+    # workspace -- the pose the proven upstream policy trains from
     init_state=ArticulationCfg.InitialStateCfg(
         pos=(0.0, 0.0, 0.0),
         rot=(1.0, 0.0, 0.0, 0.0),
         joint_pos={
             "shoulder_pan": 0.0,
-            "shoulder_lift": -0.3,
-            "elbow_flex": 0.6,
-            "wrist_flex": 0.0,
-            "wrist_roll": -0.8,
+            "shoulder_lift": 0.0,
+            "elbow_flex": 0.0,
+            "wrist_flex": 1.57,
+            "wrist_roll": 0.0,
             "gripper": 0.0,
         },
         joint_vel={".*": 0.0},
     ),
+    # PD constants adopted from the upstream isaac_so_arm101 project
+    # (BSD-3-Clause) -- empirically tuned per joint for the STS3215 servos
+    # and validated by their working lift policy. Stiffness scales with the
+    # mass each joint moves; damping ratios are much heavier than our earlier
+    # 100/10 (which was underdamped during fast 50 Hz target changes).
     actuators={
         "arm": ImplicitActuatorCfg(
             joint_names_expr=["shoulder_.*", "elbow_flex", "wrist_.*"],
             effort_limit_sim=1.9,
-            velocity_limit_sim=3.0,
-            stiffness=100.0,
-            damping=10.0,
+            velocity_limit_sim=1.5,
+            stiffness={
+                "shoulder_pan": 200.0,
+                "shoulder_lift": 170.0,
+                "elbow_flex": 120.0,
+                "wrist_flex": 80.0,
+                "wrist_roll": 50.0,
+            },
+            damping={
+                "shoulder_pan": 80.0,
+                "shoulder_lift": 65.0,
+                "elbow_flex": 45.0,
+                "wrist_flex": 30.0,
+                "wrist_roll": 20.0,
+            },
         ),
         "gripper": ImplicitActuatorCfg(
             joint_names_expr=["gripper"],
-            effort_limit_sim=1.9,
-            velocity_limit_sim=3.0,
-            stiffness=100.0,
-            damping=10.0,
+            effort_limit_sim=2.5,  # stronger grip than the arm joints
+            velocity_limit_sim=1.5,
+            stiffness=60.0,
+            damping=20.0,
         ),
     },
     soft_joint_pos_limit_factor=0.9,
