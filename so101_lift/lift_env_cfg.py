@@ -133,53 +133,33 @@ class EventCfg:
 
 @configclass
 class RewardsCfg:
-    # stage 1: get the gripper to the cube (sharp kernel, proven upstream)
-    reach = RewTerm(func=mdp.ee_cube_distance, params={"std": 0.05}, weight=2.0)
-    # stage 1a: face the cube -- teaches the wrist to rotate the jaws into a
-    # graspable orientation instead of arriving sideways
-    point_at_cube = RewTerm(func=mdp.ee_pointing_at_cube, weight=1.0)
-    # stage 1b: jaws OPEN while approaching (5-15 cm out). Weight kept LOW:
-    # at the handoff distance, closing must pay more than staying open, or
-    # the policy hovers open-jawed forever (observed: lift never amplified)
-    approach_open = RewTerm(
-        func=mdp.gripper_open_on_approach,
-        params={
-            "open_pos": 0.5,
-            "near_dist": 0.05,
-            "far_dist": 0.15,
-            "robot_cfg": SceneEntityCfg("robot", joint_names=["gripper"]),
-        },
-        weight=0.25,
-    )
-    # stage 1.5: reward an ACTUAL hold -- the gripper joint physically
-    # blocked partway by the cube. "Closed near cube" shaping failed twice:
-    # too weak -> hover open forever; too strong -> approach shut and poke.
-    # A blocked joint can only happen when the cube is truly between the
-    # fingers, and physics itself enforces the open->around->close sequence.
-    grasp = RewTerm(
-        func=mdp.cube_between_jaws,
-        params={
-            "std": 0.03,
-            "min_blocked": 0.06,
-            "max_blocked": 0.6,
-            "robot_cfg": SceneEntityCfg("robot", joint_names=["gripper"]),
-        },
-        weight=4.0,
-    )
-    # stage 2: get the cube off the ground. LOW bar (cube center rests at
-    # ~0.013 m; 0.03 = a ~1.7 cm raise): the proven upstream task pays lift
-    # for barely a 1 cm hop, which gives exploration constant taste of the
-    # bonus -- a 5 cm cliff was never discovered in our earlier runs
-    lift = RewTerm(func=mdp.cube_lifted, params={"min_height": 0.03}, weight=10.0)
-    # stage 3: carry the lifted cube to the commanded goal
+    """The PROVEN minimal recipe (upstream): reach + lift + goal tracking.
+
+    Hard-won lesson: every grasp-shaping term we added (close-near-cube,
+    open-on-approach, blocked-jaw) was exploited by the policy as a local
+    optimum (hover-and-squeeze, floor-pinning) and lift never emerged.
+    The upstream task trains successful lifting with NO grasp shaping --
+    the lift bonus alone, with a low threshold, carries discovery.
+    """
+    # reach: sharp kernel pulling the pinch point to the cube center
+    reach = RewTerm(func=mdp.ee_cube_distance, params={"std": 0.05}, weight=1.0)
+    # lift: LOW bar (cube center rests at ~0.013 m; 0.03 = a ~1.7 cm raise)
+    # so exploration constantly tastes the bonus
+    lift = RewTerm(func=mdp.cube_lifted, params={"min_height": 0.03}, weight=15.0)
+    # carry the lifted cube to the commanded goal: coarse + fine kernels
     place = RewTerm(
         func=mdp.cube_to_goal,
-        params={"std": 0.15, "min_height": 0.03, "command_name": "object_pose"},
-        weight=15.0,
+        params={"std": 0.3, "min_height": 0.03, "command_name": "object_pose"},
+        weight=16.0,
     )
-    # smoothness
-    action_rate = RewTerm(func=mdp.action_rate_l2, weight=-0.005)
-    joint_vel = RewTerm(func=mdp.joint_vel_l2, weight=-0.0005, params={"asset_cfg": SceneEntityCfg("robot")})
+    place_fine = RewTerm(
+        func=mdp.cube_to_goal,
+        params={"std": 0.05, "min_height": 0.03, "command_name": "object_pose"},
+        weight=5.0,
+    )
+    # smoothness (mild, as upstream)
+    action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-4)
+    joint_vel = RewTerm(func=mdp.joint_vel_l2, weight=-1e-4, params={"asset_cfg": SceneEntityCfg("robot")})
 
 
 @configclass
