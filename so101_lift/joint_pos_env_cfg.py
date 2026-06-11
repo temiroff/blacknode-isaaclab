@@ -73,7 +73,7 @@ class SO101LiftCubeEnvCfg(CubeLiftEnvCfg):
         ee_marker.prim_path = "/Visuals/EEFrame"
         self.scene.ee_frame = FrameTransformerCfg(
             prim_path="{ENV_REGEX_NS}/Robot/gripper_frame_link",
-            source_frame_offset=OffsetCfg(pos=[0.0, 0.0, -0.02]),
+            source_frame_offset=OffsetCfg(pos=[-0.02, 0.0, 0.0]),
             debug_vis=True,
             visualizer_cfg=ee_marker,
             target_frames=[
@@ -81,9 +81,10 @@ class SO101LiftCubeEnvCfg(CubeLiftEnvCfg):
                     prim_path="{ENV_REGEX_NS}/Robot/gripper_frame_link",
                     name="end_effector",
                     # gripper_frame_link sits at the JAW TIPS; pull the grasp
-                    # point back along local -Z so the reward optimum puts the
-                    # cube against the fixed jaw, between the fingers
-                    offset=OffsetCfg(pos=[0.0, 0.0, -0.02]),
+                    # point back along local -X (the red axis points out of
+                    # the jaws) so the reward optimum puts the cube against
+                    # the fixed jaw, between the fingers
+                    offset=OffsetCfg(pos=[-0.02, 0.0, 0.0]),
                 ),
                 # tracked only so the debug line connects gripper -> cube
                 FrameTransformerCfg.FrameCfg(
@@ -102,14 +103,14 @@ class SO101LiftCubeEnvCfg(CubeLiftEnvCfg):
         pinch_marker.prim_path = "/Visuals/PinchFrame"
         self.scene.ee_vis = FrameTransformerCfg(
             prim_path="{ENV_REGEX_NS}/Robot/gripper_frame_link",
-            source_frame_offset=OffsetCfg(pos=[0.0, 0.0, -0.02]),
+            source_frame_offset=OffsetCfg(pos=[-0.02, 0.0, 0.0]),
             debug_vis=True,
             visualizer_cfg=pinch_marker,
             target_frames=[
                 FrameTransformerCfg.FrameCfg(
                     prim_path="{ENV_REGEX_NS}/Robot/gripper_frame_link",
                     name="pinch_point",
-                    offset=OffsetCfg(pos=[0.0, 0.0, -0.02]),
+                    offset=OffsetCfg(pos=[-0.02, 0.0, 0.0]),
                 ),
             ],
         )
