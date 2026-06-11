@@ -169,6 +169,13 @@ class TerminationsCfg:
         func=mdp.root_height_below_minimum,
         params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("object")},
     )
+    # the "table edge" of our flat-floor scene: batting the cube out of the
+    # workspace kills the episode, so flailing forfeits future reward --
+    # without this, PPO inflates action noise to farm accidental flail-lifts
+    cube_batted_away = DoneTerm(
+        func=mdp.cube_out_of_reach,
+        params={"max_dist": 0.5},
+    )
 
 
 @configclass
