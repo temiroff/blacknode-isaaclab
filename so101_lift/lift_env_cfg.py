@@ -20,6 +20,7 @@ from isaaclab.managers import ObservationTermCfg as ObsTerm
 from isaaclab.managers import RewardTermCfg as RewTerm
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.managers import TerminationTermCfg as DoneTerm
+from isaaclab.markers import VisualizationMarkersCfg
 from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.sensors.frame_transformer.frame_transformer_cfg import FrameTransformerCfg
 from isaaclab.sim.spawners.from_files.from_files_cfg import GroundPlaneCfg
@@ -142,7 +143,7 @@ class TerminationsCfg:
 
 @configclass
 class CubeLiftEnvCfg(ManagerBasedRLEnvCfg):
-    scene: CubeLiftSceneCfg = CubeLiftSceneCfg(num_envs=4096, env_spacing=2.0)
+    scene: CubeLiftSceneCfg = CubeLiftSceneCfg(num_envs=4096, env_spacing=1.0)
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
     commands: CommandsCfg = CommandsCfg()
@@ -156,3 +157,15 @@ class CubeLiftEnvCfg(ManagerBasedRLEnvCfg):
         self.viewer.eye = (1.5, 1.5, 1.0)
         self.sim.dt = 0.01           # physics at 100 Hz
         self.sim.render_interval = self.decimation
+        # goal marker: small green sphere (orientation is irrelevant for this task)
+        self.commands.object_pose.goal_pose_visualizer_cfg = VisualizationMarkersCfg(
+            prim_path="/Visuals/Command/goal_pose",
+            markers={
+                "sphere": sim_utils.SphereCfg(
+                    radius=0.012,
+                    visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.1, 0.9, 0.1)),
+                ),
+            },
+        )
+        # gripper's current-pose frame marker, shrunk to the arm's scale
+        self.commands.object_pose.current_pose_visualizer_cfg.markers["frame"].scale = (0.03, 0.03, 0.03)
