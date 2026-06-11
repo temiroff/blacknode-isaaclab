@@ -52,9 +52,19 @@ class CubeLiftSceneCfg(InteractiveSceneCfg):
         ),
     )
 
+    # dark dome: a bright white dome reflects off the glossy black floor and
+    # washes it out white -- keep ambient dim and let the key light do the work
     light = AssetBaseCfg(
         prim_path="/World/light",
-        spawn=sim_utils.DomeLightCfg(color=(0.8, 0.8, 0.8), intensity=2500.0),
+        spawn=sim_utils.DomeLightCfg(color=(0.12, 0.12, 0.12), intensity=600.0),
+    )
+
+    # angled key light: illuminates the robots, reflects as a highlight
+    # instead of a full-sky white wash
+    key_light = AssetBaseCfg(
+        prim_path="/World/keyLight",
+        init_state=AssetBaseCfg.InitialStateCfg(rot=[0.924, 0.383, 0.0, 0.0]),
+        spawn=sim_utils.DistantLightCfg(color=(1.0, 1.0, 1.0), intensity=3000.0),
     )
 
 
