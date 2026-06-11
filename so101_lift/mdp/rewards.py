@@ -125,6 +125,36 @@ def gripper_closing_near_cube(
     return near * closed
 
 
+def cube_between_jaws(
+    env: ManagerBasedRLEnv,
+    std: float = 0.03,
+    min_blocked: float = 0.06,
+    max_blocked: float = 0.6,
+    cube_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+    ee_cfg: SceneEntityCfg = SceneEntityCfg("ee_frame"),
+    robot_cfg: SceneEntityCfg = SceneEntityCfg("robot", joint_names=["gripper"]),
+) -> torch.Tensor:
+    """Reward an ACTUAL hold: gripper joint physically blocked partway.
+
+    With a binary gripper the joint only rests at the open or closed target --
+    unless something is between the fingers. A blocked mid-range joint while
+    the pinch point is at the cube is therefore a hard-to-fake signature of a
+    real grasp. Unlike "closed near cube" shaping, this cannot be farmed by
+    poking the cube with shut jaws: an empty closed gripper sits at ~0.0,
+    below ``min_blocked``, and earns nothing.
+    """
+    cube: RigidObject = env.scene[cube_cfg.name]
+    ee: FrameTransformer = env.scene[ee_cfg.name]
+    robot = env.scene[robot_cfg.name]
+    if isinstance(robot_cfg.joint_ids, slice):
+        raise ValueError("cube_between_jaws: pass robot_cfg via the term's params")
+    d = torch.norm(cube.data.root_pos_w - ee.data.target_pos_w[..., _ee_index(ee), :], dim=1)
+    near = torch.exp(-d / std)
+    grip = robot.data.joint_pos[:, robot_cfg.joint_ids[0]]
+    blocked = ((grip > min_blocked) & (grip < max_blocked)).float()
+    return near * blocked
+
+
 def cube_lifted(
     env: ManagerBasedRLEnv,
     min_height: float,

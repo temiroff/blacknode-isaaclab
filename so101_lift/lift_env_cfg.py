@@ -151,12 +151,19 @@ class RewardsCfg:
         },
         weight=0.25,
     )
-    # stage 1.5: bridge -- close the jaws once AT the cube. Sharp kernel and
-    # heavy weight so that at contact distance, closing strictly dominates
-    # every hover reward combined
+    # stage 1.5: reward an ACTUAL hold -- the gripper joint physically
+    # blocked partway by the cube. "Closed near cube" shaping failed twice:
+    # too weak -> hover open forever; too strong -> approach shut and poke.
+    # A blocked joint can only happen when the cube is truly between the
+    # fingers, and physics itself enforces the open->around->close sequence.
     grasp = RewTerm(
-        func=mdp.gripper_closing_near_cube,
-        params={"std": 0.03, "robot_cfg": SceneEntityCfg("robot", joint_names=["gripper"])},
+        func=mdp.cube_between_jaws,
+        params={
+            "std": 0.03,
+            "min_blocked": 0.06,
+            "max_blocked": 0.6,
+            "robot_cfg": SceneEntityCfg("robot", joint_names=["gripper"]),
+        },
         weight=4.0,
     )
     # stage 2: get the cube off the ground (cube center starts at ~0.013 m)
