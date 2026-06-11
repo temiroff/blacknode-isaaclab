@@ -70,7 +70,10 @@ class SO101LiftCubeEnvCfg(CubeLiftEnvCfg):
         ee_marker.markers["frame"].scale = (0.03, 0.03, 0.03)
         ee_marker.prim_path = "/Visuals/EEFrame"
         self.scene.ee_frame = FrameTransformerCfg(
-            prim_path="{ENV_REGEX_NS}/Robot/base_link",
+            # source at the gripper (not base_link): the debug connector lines
+            # run source->target, so rooting here keeps them short and local
+            # instead of long yellow beams from the robot base
+            prim_path="{ENV_REGEX_NS}/Robot/gripper_link",
             debug_vis=True,
             visualizer_cfg=ee_marker,
             target_frames=[
