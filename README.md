@@ -69,6 +69,9 @@ with one command from the repo root:
 uv sync          # downloads ~10+ GB on first run (Isaac Sim wheels)
 ```
 
+> **First launch:** Isaac Sim asks you to accept the NVIDIA EULA once (type `Y`). To pre-accept in
+> non-interactive/CI contexts, set the environment variable `OMNI_KIT_ACCEPT_EULA=YES`.
+
 Verify the environment:
 
 ```bash
