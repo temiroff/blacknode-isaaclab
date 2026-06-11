@@ -16,7 +16,7 @@ import torch
 from isaaclab.assets import RigidObject
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.sensors import FrameTransformer
-from isaaclab.utils.math import combine_frame_transforms
+from isaaclab.utils.math import combine_frame_transforms, quat_apply
 
 if TYPE_CHECKING:
     from isaaclab.envs import ManagerBasedRLEnv
@@ -33,6 +33,56 @@ def ee_cube_distance(
     ee: FrameTransformer = env.scene[ee_cfg.name]
     d = torch.norm(cube.data.root_pos_w - ee.data.target_pos_w[..., 0, :], dim=1)
     return torch.exp(-d / std)
+
+
+def gripper_open_on_approach(
+    env: ManagerBasedRLEnv,
+    open_pos: float = 0.8,
+    near_dist: float = 0.04,
+    far_dist: float = 0.15,
+    cube_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+    ee_cfg: SceneEntityCfg = SceneEntityCfg("ee_frame"),
+    robot_cfg: SceneEntityCfg = SceneEntityCfg("robot", joint_names=["gripper"]),
+) -> torch.Tensor:
+    """Reward OPEN jaws while approaching (between near_dist and far_dist).
+
+    Complements ``gripper_closing_near_cube``: open on the way in, close once
+    there. Without this, the policy may approach jaws-shut and just poke the
+    cube, never discovering that it must straddle it first.
+    """
+    cube: RigidObject = env.scene[cube_cfg.name]
+    ee: FrameTransformer = env.scene[ee_cfg.name]
+    robot = env.scene[robot_cfg.name]
+    if isinstance(robot_cfg.joint_ids, slice):
+        raise ValueError("gripper_open_on_approach: pass robot_cfg via the term's params")
+    d = torch.norm(cube.data.root_pos_w - ee.data.target_pos_w[..., 0, :], dim=1)
+    in_band = (d > near_dist) & (d < far_dist)
+    grip = robot.data.joint_pos[:, robot_cfg.joint_ids[0]]
+    openness = torch.clamp(grip / open_pos, 0.0, 1.0)  # 1 = fully open
+    return in_band.float() * openness
+
+
+def ee_pointing_at_cube(
+    env: ManagerBasedRLEnv,
+    cube_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+    ee_cfg: SceneEntityCfg = SceneEntityCfg("ee_frame"),
+) -> torch.Tensor:
+    """Reward orienting the gripper mouth toward the cube.
+
+    The TCP's local +Z axis points out of the jaws (measured from the asset).
+    Reward = cosine between that axis (in world) and the ee->cube direction:
+    1 when the gripper faces the cube dead-on, 0 when sideways or away. This
+    is what teaches the wrist joints to rotate into a graspable orientation.
+    """
+    cube: RigidObject = env.scene[cube_cfg.name]
+    ee: FrameTransformer = env.scene[ee_cfg.name]
+    ee_pos = ee.data.target_pos_w[..., 0, :]
+    ee_quat = ee.data.target_quat_w[..., 0, :]
+    approach_axis = torch.tensor([0.0, 0.0, 1.0], device=ee_pos.device).expand(ee_pos.shape[0], 3)
+    axis_w = quat_apply(ee_quat, approach_axis)
+    to_cube = cube.data.root_pos_w - ee_pos
+    to_cube = to_cube / torch.norm(to_cube, dim=1, keepdim=True).clamp(min=1e-6)
+    return torch.clamp((axis_w * to_cube).sum(dim=1), 0.0, 1.0)
 
 
 def gripper_closing_near_cube(

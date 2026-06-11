@@ -112,7 +112,21 @@ class EventCfg:
 class RewardsCfg:
     # stage 1: get the gripper to the cube
     reach = RewTerm(func=mdp.ee_cube_distance, params={"std": 0.1}, weight=2.0)
-    # stage 1.5: bridge -- close the jaws while at the cube, so the policy
+    # stage 1a: face the cube -- teaches the wrist to rotate the jaws into a
+    # graspable orientation instead of arriving sideways
+    point_at_cube = RewTerm(func=mdp.ee_pointing_at_cube, weight=1.0)
+    # stage 1b: jaws OPEN while approaching (4-15 cm out)
+    approach_open = RewTerm(
+        func=mdp.gripper_open_on_approach,
+        params={
+            "open_pos": 0.8,
+            "near_dist": 0.04,
+            "far_dist": 0.15,
+            "robot_cfg": SceneEntityCfg("robot", joint_names=["gripper"]),
+        },
+        weight=0.5,
+    )
+    # stage 1.5: bridge -- close the jaws once AT the cube, so the policy
     # discovers grasping instead of hovering forever in the reach optimum
     grasp = RewTerm(
         func=mdp.gripper_closing_near_cube,
